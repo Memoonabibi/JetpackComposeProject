@@ -21,18 +21,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.jetpackcomposeproject.ui.theme.JetpackComposeProjectTheme
+import com.example.jetpackcomposeproject.R
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,9 +50,123 @@ class MainActivity : ComponentActivity() {
         setContent {
             JetpackComposeProjectTheme {
                 Scaffold { innerPadding ->
-                    UserList (
-                        modifier = Modifier
-                            .padding(innerPadding)
+                    UserList(
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+        }
+    }
+}
+
+data class Contact(val name: String, val phoneNumber: String)
+
+@Composable
+fun UserList(modifier: Modifier) {
+    var name by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var empty by remember { mutableStateOf(false) }
+    var isDuplicate by remember { mutableStateOf(false) }
+    var phoneError by remember { mutableStateOf(false) }
+    val contactList = remember { mutableStateListOf<Contact>() }
+
+    Box(
+        modifier = Modifier
+            .background(color = Color(0xffeaf4f4))
+            .padding(16.dp, top = 44.dp, 16.dp)
+            .fillMaxSize()
+    ) {
+        Column {
+
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        isDuplicate = false
+                        empty = false
+                    },
+                    placeholder = { Text(text = "Enter name") },
+                    isError = empty || isDuplicate,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = phoneNumber,
+                    onValueChange = {
+                        phoneNumber = it
+                        phoneError = false
+
+                                    },
+                    placeholder = { Text(text = "Enter phone number") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (isDuplicate) {
+                    Text(
+                        text = "Contact already exists!",
+                        color = Color.Red,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(25.dp))
+                }
+                Button(
+                    onClick = {
+                        when {
+                            name.isBlank() || phoneNumber.isBlank() -> {
+                                empty = true
+                                isDuplicate = false
+                            }
+                            contactList.any { it.name == name && it.phoneNumber == phoneNumber } -> {
+                                isDuplicate = true
+                                empty = false
+                            }
+                            else -> {
+                                contactList.add(Contact(name, phoneNumber))
+                                name = ""
+                                phoneNumber = ""
+                                empty = false
+                                isDuplicate = false
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff7f5539),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(start = 8.dp)
+                ) {
+                    Text(text = "Add", fontSize = 16.sp)
+                }
+            }
+
+
+            Text(
+                text = "Total contacts: ${contactList.size}",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn {
+                items(count = contactList.size) { index ->
+                    ContactItem(
+                        contact = contactList[index],
+                        index = index,
+                        modifier = modifier
                     )
                 }
             }
@@ -52,62 +175,41 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun UserList(modifier: Modifier) {
-    var name by remember { mutableStateOf(value ="") }
-    var empty by remember { mutableStateOf(value = false) }
-    val nameList = remember { mutableStateListOf<String>() }
-    Box (
+fun ContactItem(contact: Contact, index: Int, modifier: Modifier) {
+    Box(
         modifier = Modifier
             .background(
-                color = Color (0xffeaf4f4)
+                color = if (index % 2 == 0) Color(0xffd4a373) else Color(0xfffaedcd)
             )
-            .padding(16.dp, top = 34.dp,16.dp)
-            .fillMaxSize()
-    )
-       {
-
-        Column {
-            Row (
-                horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(12.dp)
+            .fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "User Icon",
+                tint = Color.Gray,
                 modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                OutlinedTextField (
-                    value = name,
-                    onValueChange = {
-                        name = it
-                    },
-                    placeholder = {
-                        Text(text = "Enter name here!")
-                    },
-                    isError = empty
+                    .padding(end = 8.dp)
+                    .size(48.dp)
+            )
+
+            Column {
+                Text(
+                    text = "${contact.name}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.W600,
+                    modifier = Modifier.padding(start = 6.dp)
                 )
-                Button (onClick = {
-
-                    if (name.isNotBlank()) {
-                        empty = false
-                        nameList.add(name)
-                        name = ""
-                    } else {
-                        empty = true
-                    }
-
-                }
-                ) {
-                    Text(text = "Add")
-                }
-            }
-            Spacer (modifier = Modifier.height(24.dp))
-            LazyColumn {
-                items (count = nameList.size) {
-                        index -> NameItem (index = index, name = nameList[index], modifier = modifier)
-
-                }
+                Text(
+                    text = "${contact.phoneNumber}",
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(start = 6.dp)
+                )
             }
         }
-
-
     }
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 }
 
 @Preview
@@ -115,31 +217,7 @@ fun UserList(modifier: Modifier) {
 fun UserListPreview() {
     JetpackComposeProjectTheme {
         Scaffold { innerPadding ->
-            UserList(
-                modifier = Modifier.padding(innerPadding)
-            )
+            UserList(modifier = Modifier.padding(innerPadding))
         }
     }
-}
-
-
-@Composable
-fun NameItem (index: Int, modifier: Modifier, name: String) {
-    Text(
-        text = name,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.W500,
-        modifier = Modifier
-            .background (
-                color = if ( index % 2 == 0) Color (color = 0xffff7b00) else Color(0xffe9ecef)
-            )
-            .fillMaxWidth()
-            .padding(
-                bottom = 12.dp,
-                top = 12.dp,
-                start = 6.dp
-            )
-    )
-    HorizontalDivider()
-
 }
